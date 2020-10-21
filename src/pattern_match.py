@@ -52,11 +52,13 @@ qr_p1 {  -----------------------
 '''
 qubits = dict()
 
-def _build_control_state(upper_qubit_index, s):
-    control_state = '0'
-    for i in range(upper_qubit_index + 1, s):
+def _build_control_state(num_control_qubits):
+    control_state = ''
+    for i in range(num_control_qubits - 1):
         control_state = control_state + '1'
 
+    # print(f"number of control qubits: {len(previous_qubits[upper_qubit_index : s])}")
+    control_state = control_state + '0'
     print(control_state)
     return control_state
 
@@ -74,9 +76,18 @@ def add_pattern_char_state(qc, i, s):
 
     # Encode the order of the pattern char locations
     for upper_qubit_index in range(s - 1, -1, -1):
-        for num_qubits in range(s - 1, upper_qubit_index - 1, -1):
-            acx = XGate().control(ctrl_state = _build_control_state(upper_qubit_index, s) )
-            qc.append(acx, [ previous_qubits[upper_qubit_index : s], new_qubits[num_qubits] ])
+        for lower_qubit_index in range(s - 1, upper_qubit_index - 1, -1):
+            num_control_qubits = s - upper_qubit_index
+            print(f'num_control_qubits: {num_control_qubits}')
+            acx = XGate().control(num_ctrl_qubits = num_control_qubits, ctrl_state = _build_control_state(num_control_qubits) )
+            print(f"acx control qubits: {acx.num_ctrl_qubits}")
+            print(f'len(previous_qubits[upper_qubit_index : s]) = {len(previous_qubits[upper_qubit_index : s])}')
+            print(f'upper_qubit_index = {upper_qubit_index}')
+            # print(f"test qargs length {len([ previous_qubits[upper_qubit_index : s], new_qubits[lower_qubit_index] ])}")
+            acx_qargs = list(previous_qubits[upper_qubit_index : s])
+            acx_qargs.append(new_qubits[lower_qubit_index])
+            print(f"test len: {acx_qargs}")
+            qc.append(acx, qargs = acx_qargs)
             # qc.mcx(previous_qubits[j : s], new_qubits[k])
 
     qc.barrier()
