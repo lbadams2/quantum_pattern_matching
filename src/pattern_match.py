@@ -39,6 +39,7 @@ from oracles import oracles
 
 '''
 Example for s = 3:
+https://algassert.com/quirk#circuit=%7B%22cols%22%3A%5B%5B%22H%22%2C%22H%22%2C%22H%22%5D%2C%5B%22%E2%80%A2%22%2C1%2C1%2C%22X%22%5D%2C%5B1%2C%22%E2%80%A2%22%2C1%2C1%2C%22X%22%5D%2C%5B1%2C1%2C%22%E2%80%A2%22%2C1%2C1%2C%22X%22%5D%2C%5B1%2C1%2C%22%E2%97%A6%22%2C1%2C1%2C%22X%22%5D%2C%5B1%2C%22%E2%97%A6%22%2C%22%E2%80%A2%22%2C1%2C1%2C%22X%22%5D%2C%5B1%2C%22%E2%97%A6%22%2C%22%E2%80%A2%22%2C1%2C%22X%22%5D%2C%5B%22%E2%97%A6%22%2C%22%E2%80%A2%22%2C%22%E2%80%A2%22%2C1%2C1%2C%22X%22%5D%2C%5B%22%E2%97%A6%22%2C%22%E2%80%A2%22%2C%22%E2%80%A2%22%2C1%2C%22X%22%5D%2C%5B%22%E2%97%A6%22%2C%22%E2%80%A2%22%2C%22%E2%80%A2%22%2C%22X%22%5D%5D%7D
 
        / -[ H ]-----------------
 qr_p0 {  -[ H ]-----------------
@@ -57,13 +58,11 @@ def _build_control_state(num_control_qubits):
     for i in range(num_control_qubits - 1):
         control_state = control_state + '1'
 
-    # print(f"number of control qubits: {len(previous_qubits[upper_qubit_index : s])}")
     control_state = control_state + '0'
-    print(control_state)
     return control_state
 
 
-def add_pattern_char_state(qc, i, s):
+def _add_pattern_char_state(qc, i, s):
     new_qubits = QuantumRegister(s)
     qc.add_register(new_qubits)
     qubits[f'qr_p{i}'] = new_qubits
@@ -78,17 +77,16 @@ def add_pattern_char_state(qc, i, s):
     for upper_qubit_index in range(s - 1, -1, -1):
         for lower_qubit_index in range(s - 1, upper_qubit_index - 1, -1):
             num_control_qubits = s - upper_qubit_index
-            print(f'num_control_qubits: {num_control_qubits}')
-            acx = XGate().control(num_ctrl_qubits = num_control_qubits, ctrl_state = _build_control_state(num_control_qubits) )
-            print(f"acx control qubits: {acx.num_ctrl_qubits}")
-            print(f'len(previous_qubits[upper_qubit_index : s]) = {len(previous_qubits[upper_qubit_index : s])}')
-            print(f'upper_qubit_index = {upper_qubit_index}')
-            # print(f"test qargs length {len([ previous_qubits[upper_qubit_index : s], new_qubits[lower_qubit_index] ])}")
+
+            acx = XGate().control(
+                num_ctrl_qubits = num_control_qubits,
+                ctrl_state = _build_control_state(num_control_qubits)
+            )
+
             acx_qargs = list(previous_qubits[upper_qubit_index : s])
             acx_qargs.append(new_qubits[lower_qubit_index])
-            print(f"test len: {acx_qargs}")
+
             qc.append(acx, qargs = acx_qargs)
-            # qc.mcx(previous_qubits[j : s], new_qubits[k])
 
     qc.barrier()
 
@@ -106,7 +104,7 @@ def create_initial_state(qc, s, M):
     # sequentially entangle each character
     # each character represented by s qubits, s is number of bits in index
     for i in range(1, M + 1):
-        add_pattern_char_state(qc, i, s)
+        _add_pattern_char_state(qc, i, s)
 
 
 def pattern_match(qc):
