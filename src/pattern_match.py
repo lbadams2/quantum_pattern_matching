@@ -53,6 +53,8 @@ qr_p1 {  -----------------------
 '''
 qubits = dict()
 
+# The control state is a list of 0's and 1's that encodes whether a 0 or a 1
+#   will activate the control for the i_th qubit in the control state string
 def _build_control_state(num_control_qubits):
     control_state = ''
     for i in range(num_control_qubits - 1):
