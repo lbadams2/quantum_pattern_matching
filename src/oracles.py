@@ -5,16 +5,29 @@ Liam Adams and Alec Landow
 
 Creates oracles for each letter of the alphabet
 
+References
+    https://www.geeksforgeeks.org/iterate-over-characters-of-a-string-in-python/
+
 '''
-alphabet = 'abcdefg'
 
-oracles = dict()
+from qiskit import quantum_info
+import numpy as np
 
-
-def generate_oracle(char):
-    # oracles[char] = something()
-    pass
+alphabet = ('0', '1')
 
 
-for char in alphabet:
-    generate_oracle(char)
+def generate_oracles(s, input_string):
+    oracles = dict()
+
+    for pattern_char in alphabet:
+        pattern_char_oracle_matrix = np.identity( int( 2**s ) )
+
+        for i in range( len(input_string) ):
+            if input_string[i] == pattern_char:
+                pattern_char_oracle_matrix[i, i] = -1
+
+        oracles[pattern_char] = quantum_info.Operator( pattern_char_oracle_matrix )
+
+    wildcard_oracle_matrix = np.multiply( -1, np.identity( int( 2**s ) ) )
+    oracles['*'] = quantum_info.Operator( wildcard_oracle_matrix )
+    return oracles

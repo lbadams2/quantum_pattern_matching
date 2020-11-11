@@ -35,7 +35,7 @@ import math
 from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit
 from qiskit.circuit.library.standard_gates import XGate
 from qiskit import Aer, IBMQ, execute
-from oracles import oracles
+from oracles import generate_oracles
 
 '''
 Example for s = 3:
@@ -51,7 +51,7 @@ qr_p1 {  -----------------------
      ...
 
 '''
-qubits = dict()
+qubits_for_pattern_chars = dict()
 
 # The control state is a list of 0's and 1's that encodes whether a 0 or a 1
 #   will activate the control for the i_th qubit in the control state string
@@ -67,9 +67,9 @@ def _build_control_state(num_control_qubits):
 def _add_pattern_char_state(qc, i, s):
     new_qubits = QuantumRegister(s)
     qc.add_register(new_qubits)
-    qubits[f'qr_p{i}'] = new_qubits
+    qubits_for_pattern_chars[i] = new_qubits
 
-    previous_qubits = qubits[f'qr_p{i - 1}']
+    previous_qubits = qubits_for_pattern_chars[i - 1]
 
     # Entangle previous qubits with the new qubits
     for j in range(s):
@@ -97,9 +97,9 @@ def _add_pattern_char_state(qc, i, s):
 # need walsh hadamard on s qubits
 # figure 2 on page 4
 def create_initial_state(qc, s, M):
-    qubits['qr_p0'] = QuantumRegister(s)
-    qc.add_register(qubits['qr_p0'])
-    qc.h(qubits['qr_p0'])
+    qubits_for_pattern_chars[0] = QuantumRegister(s)
+    qc.add_register(qubits_for_pattern_chars[0])
+    qc.h(qubits_for_pattern_chars[0])
 
     # Apply H gates to each of the s qubits in the first pattern char state
     # foreach (M - 1): add_pattern_char_state()
@@ -137,14 +137,17 @@ if __name__ == '__main__':
     s = math.ceil( math.log2(N - M + 1) ) # round up if N - M + 1 is not a power of 2
 
     qc = QuantumCircuit()
-    create_initial_state(qc, s, M)
+    oracles = generate_oracles(s, input_string)
 
-    qc.draw(output = 'mpl', plot_barriers = False, filename = "test1.png")
+    create_initial_state(qc, s, M)
 
     # run ~sqrt(N) times
     number_of_iterations = math.ceil( math.sqrt( math.pow(s, 2) ) )
     for q in range(number_of_iterations):
         pattern_match(qc)
 
-    # create initial state
+
+    # qc.draw(output = 'mpl', plot_barriers = False, filename = "test1.png")
+    print( qc )
+
     # get the oracle corresponding to each letter in the pattern
