@@ -27,6 +27,7 @@ M = 2
 References
     https://qiskit.org/documentation/stubs/qiskit.circuit.ControlledGate.html
     https://stackoverflow.com/questions/61286794/is-there-an-anti-control-gate-in-qiskit
+    https://pynative.com/python-random-randrange/#:~:text=Use%20randint()%20when%20you,number%20from%20an%20exclusive%20range.
 
 '''
 
@@ -36,6 +37,7 @@ from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit
 from qiskit.circuit.library.standard_gates import XGate
 from qiskit import Aer, IBMQ, execute
 from oracles import generate_oracles
+from random import randint
 
 '''
 Example for s = 3:
@@ -109,17 +111,19 @@ def create_initial_state(qc, s, M):
         _add_pattern_char_state(qc, i, s)
 
 
-def pattern_match(qc):
-    r = 0 # TODO: remove placeholder
-    # 1. Choose r from [ 0 .. floor(sqrt(N - M + 1)) ] <-- random selection
-    # 2. create_initial_state()
-    # 3.
-    for i in range(1, r + 1, 1):
-        # j: index of a char in the pattern
-        # a. Choose j from [1, M] <-- random selection
-        # b. Apply Q_(p_j) to the set of s qubits that represent pattern char j
-        # c. Apply Diffusion Operator to the entire state psi
-        pass
+def pattern_match(qc, oracles, pattern, s):
+    # j: index of a char in the pattern
+    # a. Choose j randomly from [1, M]
+    j = randint( 0, len(pattern) - 1 )
+
+    # b. Apply Q_(p_j) to the set of s qubits that represent pattern char j
+    qubit_start_index = j * s
+    qubit_stop_index  = qubit_start_index + s
+    pattern_char = pattern[j]
+    qc.unitary( oracles[ pattern_char ], range( qubit_start_index, qubit_stop_index ) )
+
+    # c. Apply Diffusion Operator to the entire state psi
+
 
     pass
 
@@ -127,24 +131,24 @@ def pattern_match(qc):
 if __name__ == '__main__':
     # get input string
     # get pattern
-    input_string = 'ccabccccc'
+    input_string = '001000000'
     N = len(input_string)
 
-    pattern = 'ab'
+    pattern = '1*'
     M = len(pattern)
 
     # N - M + 1 = 2^s
     s = math.ceil( math.log2(N - M + 1) ) # round up if N - M + 1 is not a power of 2
 
     qc = QuantumCircuit()
-    oracles = generate_oracles(s, input_string)
+    oracles = generate_oracles( s, input_string, len(pattern) )
 
     create_initial_state(qc, s, M)
 
     # run ~sqrt(N) times
     number_of_iterations = math.ceil( math.sqrt( math.pow(s, 2) ) )
     for q in range(number_of_iterations):
-        pattern_match(qc)
+        pattern_match( qc, oracles, pattern, s )
 
 
     # qc.draw(output = 'mpl', plot_barriers = False, filename = "test1.png")

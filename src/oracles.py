@@ -16,13 +16,15 @@ import numpy as np
 alphabet = ('0', '1')
 
 
-def generate_oracles(s, input_string):
+def generate_oracles(s, input_string, pattern_length):
     oracles = dict()
 
     for pattern_char in alphabet:
         pattern_char_oracle_matrix = np.identity( int( 2**s ) )
 
-        for i in range( len(input_string) ):
+        N = len(input_string)
+        M = pattern_length
+        for i in range( N - M + 1 ):
             if input_string[i] == pattern_char:
                 pattern_char_oracle_matrix[i, i] = -1
 
