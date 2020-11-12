@@ -121,15 +121,17 @@ def create_initial_state(qc, s, M):
     for i in range(1, M):
         _add_pattern_char_state(qc, i, s)
 
-def diffuser(qc, s):
-    qc.h( qubits_for_pattern_chars[0] )
+def diffuser(qc, oracles, s):
+    # qc.h( qubits_for_pattern_chars[0] )
+    for qubit_group in qubits_for_pattern_chars:
+        qc.h( qubit_group )
 
     diffuser_matrix = np.identity( int( 2**s ) )
     diffuser_matrix[0, 0] = -1
     qubit_start_index = 0
     qubit_stop_index  = qubit_start_index + s
     qc.unitary(
-        quantum_info.Operator( diffuser_matrix ),
+        oracles['*'], # quantum_info.Operator( diffuser_matrix ),
         range( qubit_start_index, qubit_stop_index ),
         label = " U'"
     )
@@ -155,7 +157,7 @@ def pattern_match(qc, oracles, pattern, s):
     qc.barrier()
 
     # c. Apply Diffusion Operator to the entire state psi
-    diffuser(qc, s)
+    diffuser(qc, oracles, s)
 
     qc.barrier()
 

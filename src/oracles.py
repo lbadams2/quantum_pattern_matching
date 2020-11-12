@@ -21,7 +21,7 @@ def generate_oracles(s, input_string, pattern_length):
 
     for pattern_char in alphabet:
         pattern_char_oracle_matrix = np.identity( int( 2**s ) )
-
+        # TODO: Imitate tensor products
         N = len(input_string)
         M = pattern_length
         for i in range( 2**s ):
