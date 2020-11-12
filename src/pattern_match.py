@@ -128,7 +128,11 @@ def diffuser(qc, s):
     diffuser_matrix[0, 0] = -1
     qubit_start_index = 0
     qubit_stop_index  = qubit_start_index + s
-    qc.unitary( quantum_info.Operator( diffuser_matrix ), range( qubit_start_index, qubit_stop_index ) )
+    qc.unitary(
+        quantum_info.Operator( diffuser_matrix ),
+        range( qubit_start_index, qubit_stop_index ),
+        label = " U'"
+    )
 
     qc.h( qubits_for_pattern_chars[0] )
 
@@ -137,13 +141,17 @@ def pattern_match(qc, oracles, pattern, s):
     # j: index of a char in the pattern
     # a. Choose j randomly from [1, M]
     j = randint( 0, len(pattern) - 1 )
-    print(f'j = {j}')
+    # print(f'j = {j}')
 
     # b. Apply Q_(p_j) to the set of s qubits that represent pattern char j
     qubit_start_index = j * s
     qubit_stop_index  = qubit_start_index + s
     pattern_char = pattern[j]
-    qc.unitary( oracles[ pattern_char ], range( qubit_start_index, qubit_stop_index ) )
+    qc.unitary(
+        oracles[ pattern_char ],
+        range( qubit_start_index, qubit_stop_index ),
+        label = f" ['{pattern[j]}' Oracle]"
+    )
     qc.barrier()
 
     # c. Apply Diffusion Operator to the entire state psi
@@ -157,20 +165,19 @@ def pattern_match(qc, oracles, pattern, s):
 if __name__ == '__main__':
     # get input string
     # get pattern
-    input_string = '010'.zfill( 2**4 )
+    input_string = '010'.ljust( 2**3, '0' ) # '010'.zfill( 2**4 )
     padded_length = 2**( math.ceil(math.log2(len(input_string))) )
     input_string = input_string.ljust( padded_length, '0' )
     print( f'input_string = {input_string}' )
     N = len(input_string)
 
-    pattern = '01'
+    pattern = '010'
     M = len(pattern)
     print( f'pattern = {pattern}' )
 
     # N - M + 1 = 2^s
     s = math.ceil( math.log2(N - M + 1) ) # round up if N - M + 1 is not a power of 2
     print(f's = {s}')
-
 
     qc = QuantumCircuit()
     oracles = generate_oracles( s, input_string, len(pattern) )

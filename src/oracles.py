@@ -25,7 +25,7 @@ def generate_oracles(s, input_string, pattern_length):
         N = len(input_string)
         M = pattern_length
         for i in range( 2**s ):
-            print(f'{input_string[i]} =? {pattern_char}')
+            # print(f'{input_string[i]} =? {pattern_char}')
             if input_string[i] == pattern_char:
                 pattern_char_oracle_matrix[i, i] = -1
 
