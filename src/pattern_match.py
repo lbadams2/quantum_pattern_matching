@@ -122,16 +122,14 @@ def create_initial_state(qc, s, M):
         _add_pattern_char_state(qc, i, s)
 
 def diffuser(qc, oracles, s):
-    # qc.h( qubits_for_pattern_chars[0] )
-    for qubit_group in qubits_for_pattern_chars:
-        qc.h( qubit_group )
+    qc.h( qubits_for_pattern_chars[0] )
 
     diffuser_matrix = np.identity( int( 2**s ) )
     diffuser_matrix[0, 0] = -1
     qubit_start_index = 0
     qubit_stop_index  = qubit_start_index + s
     qc.unitary(
-        oracles['*'], # quantum_info.Operator( diffuser_matrix ),
+        quantum_info.Operator( diffuser_matrix ),
         range( qubit_start_index, qubit_stop_index ),
         label = " U'"
     )
@@ -167,7 +165,7 @@ def pattern_match(qc, oracles, pattern, s):
 if __name__ == '__main__':
     # get input string
     # get pattern
-    input_string = '010'.ljust( 2**3, '0' ) # '010'.zfill( 2**4 )
+    input_string = '010'.ljust( 2**3, '0' )
     padded_length = 2**( math.ceil(math.log2(len(input_string))) )
     input_string = input_string.ljust( padded_length, '0' )
     print( f'input_string = {input_string}' )
