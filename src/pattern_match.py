@@ -122,19 +122,20 @@ def create_initial_state(qc, s, M):
         _add_pattern_char_state(qc, i, s)
 
 def diffuser(qc, oracles, s):
-    qc.h( qubits_for_pattern_chars[0] )
+    for j in range(0, len(qubits_for_pattern_chars)):
+        qc.h( qubits_for_pattern_chars[j] )
 
-    diffuser_matrix = np.identity( int( 2**s ) )
-    diffuser_matrix[0, 0] = -1
-    qubit_start_index = 0
-    qubit_stop_index  = qubit_start_index + s
-    qc.unitary(
-        quantum_info.Operator( diffuser_matrix ),
-        range( qubit_start_index, qubit_stop_index ),
-        label = " U'"
-    )
+        diffuser_matrix = np.identity( int( 2**s ) )
+        diffuser_matrix[0, 0] = -1
+        qubit_start_index = j * s
+        qubit_stop_index  = qubit_start_index + s
+        qc.unitary(
+            quantum_info.Operator( diffuser_matrix ),
+            range( qubit_start_index, qubit_stop_index ),
+            label = " U'"
+        )
 
-    qc.h( qubits_for_pattern_chars[0] )
+        qc.h( qubits_for_pattern_chars[j] )
 
 
 def pattern_match(qc, oracles, pattern, s):
@@ -165,13 +166,13 @@ def pattern_match(qc, oracles, pattern, s):
 if __name__ == '__main__':
     # get input string
     # get pattern
-    input_string = '010'.ljust( 2**3, '0' )
+    input_string = '01'.ljust( 2**2, '0' )
     padded_length = 2**( math.ceil(math.log2(len(input_string))) )
     input_string = input_string.ljust( padded_length, '0' )
     print( f'input_string = {input_string}' )
     N = len(input_string)
 
-    pattern = '010'
+    pattern = '01'
     M = len(pattern)
     print( f'pattern = {pattern}' )
 
