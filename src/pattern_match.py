@@ -43,6 +43,7 @@ from qiskit.circuit.library.standard_gates import XGate
 
 from oracles import generate_oracles
 from random import randint
+from sys import argv
 
 import numpy as np
 import pprint
@@ -121,24 +122,47 @@ def create_initial_state(qc, s, M):
     for i in range(1, M):
         _add_pattern_char_state(qc, i, s)
 
-def diffuser(qc, oracles, s):
+def diffuser_old(qc, oracles, M, s):
     for j in range(0, len(qubits_for_pattern_chars)):
         qc.h( qubits_for_pattern_chars[j] )
 
-        diffuser_matrix = np.identity( int( 2**s ) )
-        diffuser_matrix[0, 0] = -1
-        qubit_start_index = j * s
-        qubit_stop_index  = qubit_start_index + s
-        qc.unitary(
-            quantum_info.Operator( diffuser_matrix ),
-            range( qubit_start_index, qubit_stop_index ),
-            label = " U'"
-        )
+    diffuser_matrix = np.identity( int( 2**(s * M) ) )
+    diffuser_matrix[0, 0] = -1
+    qubit_start_index = 0
+    qubit_stop_index  = qubit_start_index + (s * M)
+    qc.unitary(
+        quantum_info.Operator( diffuser_matrix ),
+        range( qubit_start_index, qubit_stop_index ),
+        label = " U'"
+    )
 
+    for j in range(0, len(qubits_for_pattern_chars)):
         qc.h( qubits_for_pattern_chars[j] )
 
+# Derived From Qiskit
+def diffuser(qc, M, s):
+    nqubits = s # M * s
 
-def pattern_match(qc, oracles, pattern, s):
+    # Apply transformation |s> -> |00..0> (H-gates)
+    for qubit in range(nqubits):
+        qc.h(qubit)
+    # Apply transformation |00..0> -> |11..1> (X-gates)
+    for qubit in range(nqubits):
+        qc.x(qubit)
+    # Do multi-controlled-Z gate
+    qc.barrier()
+    qc.h(nqubits-1)
+    qc.mct(list(range(nqubits-1)), nqubits-1)  # multi-controlled-toffoli
+    qc.h(nqubits-1)
+    qc.barrier()
+    # Apply transformation |11..1> -> |00..0>
+    for qubit in range(nqubits):
+        qc.x(qubit)
+    # Apply transformation |00..0> -> |s>
+    for qubit in range(nqubits):
+        qc.h(qubit)
+
+def pattern_match(qc, oracles, pattern, M, s):
     # j: index of a char in the pattern
     # a. Choose j randomly from [1, M]
     j = randint( 0, len(pattern) - 1 )
@@ -148,6 +172,7 @@ def pattern_match(qc, oracles, pattern, s):
     qubit_start_index = j * s
     qubit_stop_index  = qubit_start_index + s
     pattern_char = pattern[j]
+    print(f'pattern_char = {pattern_char}')
     qc.unitary(
         oracles[ pattern_char ],
         range( qubit_start_index, qubit_stop_index ),
@@ -156,23 +181,29 @@ def pattern_match(qc, oracles, pattern, s):
     qc.barrier()
 
     # c. Apply Diffusion Operator to the entire state psi
-    diffuser(qc, oracles, s)
+    # diffuser(qc, oracles, M, s)
+    diffuser(qc, M, s)
 
     qc.barrier()
 
     return
 
+def run_match(input_string, pattern):
+    if input_string == None:
+        input_string = argv[1]
 
-if __name__ == '__main__':
-    # get input string
-    # get pattern
-    input_string = '01'.ljust( 2**2, '0' )
+    if pattern == None:
+        pattern = argv[2]
+
+    if input_string == "" or input_string == None:
+        input_string = '01'.ljust( 2**3, '0' )
     padded_length = 2**( math.ceil(math.log2(len(input_string))) )
     input_string = input_string.ljust( padded_length, '0' )
     print( f'input_string = {input_string}' )
     N = len(input_string)
 
-    pattern = '01'
+    if pattern == "" or pattern == None:
+        pattern = '1'
     M = len(pattern)
     print( f'pattern = {pattern}' )
 
@@ -186,16 +217,16 @@ if __name__ == '__main__':
     create_initial_state(qc, s, M)
 
     # run ~sqrt(N) times
-    number_of_iterations = math.ceil( math.sqrt( math.pow(s, 2) ) )
+    number_of_iterations = 1 # math.ceil( math.sqrt( math.pow(s, 2) ) )
     print(f'number_of_iterations = {number_of_iterations}')
     for q in range(number_of_iterations):
-        pattern_match( qc, oracles, pattern, s )
+        pattern_match( qc, oracles, pattern, M, s )
 
     classicalRegisters = ClassicalRegister(s)
     qc.add_register(classicalRegisters)
     qc.measure( qubits_for_pattern_chars[0], classicalRegisters )
 
-    qc.draw(output = 'mpl', plot_barriers = True, filename = "test2.png")
+    # qc.draw(output = 'mpl', plot_barriers = True, filename = "test2.png")
     print( qc )
 
     backend = simulatorBackend
@@ -204,5 +235,10 @@ if __name__ == '__main__':
     job = execute(qc, backend = backend, shots = shots)
     results = job.result()
     counts = results.get_counts()
+
+    return counts
+
+if __name__ == '__main__':
+    counts = run_match(None, None)
 
     pprint.pprint(counts)
