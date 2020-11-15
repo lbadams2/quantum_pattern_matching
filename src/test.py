@@ -25,7 +25,8 @@ def test(input_string, pattern):
     expected = input_string.find(pattern)
     countsDictionary = dict(counts)
     result = int( max(counts.items(), key = itemgetter(1))[0], 2)
-
+    print(f'Expected: {expected}')
+    print(f'Result: {result}')
     if (expected == result):
         print( colored('Test Passed', 'green') )
     else:
