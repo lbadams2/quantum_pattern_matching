@@ -19,6 +19,8 @@ from operator import itemgetter
 from termcolor import colored
 from itertools import permutations
 
+from sys import argv
+
 pass_count = 0
 valid_count = 0
 fail_count = 0
@@ -130,11 +132,12 @@ def test_three_char_patterns():
     test('10000111', '111')
 
 def run_tests():
-    if sys.argv[1] == 1:
+    num_chars_in_pattern = argv[1]
+    if num_chars_in_pattern == 1:
         test_single_char_patterns()
-    elif sys.argv[2] == 2:
+    elif num_chars_in_pattern == 2:
         test_two_char_patterns()
-    elif sys.argv[3] == 3:
+    elif num_chars_in_pattern == 3:
         test_three_char_patterns()
     else:
         test_single_char_patterns()
