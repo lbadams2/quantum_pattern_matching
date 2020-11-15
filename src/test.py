@@ -11,6 +11,9 @@ References:
     https://stackoverflow.com/questions/8306654/finding-all-possible-permutations-of-a-given-string-in-python
     https://stackoverflow.com/questions/663171/how-do-i-get-a-substring-of-a-string-in-python
     https://www.w3schools.com/python/ref_string_format.asp
+    https://docs.python.org/3/library/re.html
+    https://docs.python.org/3/library/re.html#match-objects
+    https://docs.python.org/3/howto/regex.html
 '''
 # perms = [''.join(p) for p in permutations('stack')]
 import re
@@ -54,8 +57,9 @@ def test(input_string, pattern):
         print( colored('Test Passed', 'green') )
     else:
         result_substring = input_string[ result : result + len(pattern) ]
-
-        if result_substring == pattern:
+        # print(f'result_substring = {result_substring}')
+        result_substring_matchObject = re.search(pattern, result_substring)
+        if len(result_substring) == len(pattern) and result_substring_matchObject != None:
             valid_count = valid_count + 1
             print( colored('Correct Match, Unexpected Location', 'yellow') )
         else:
