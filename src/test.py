@@ -10,8 +10,10 @@ References:
     https://stackoverflow.com/questions/287871/how-to-print-colored-text-in-python
     https://stackoverflow.com/questions/8306654/finding-all-possible-permutations-of-a-given-string-in-python
     https://stackoverflow.com/questions/663171/how-do-i-get-a-substring-of-a-string-in-python
+    https://www.w3schools.com/python/ref_string_format.asp
 '''
 # perms = [''.join(p) for p in permutations('stack')]
+import re
 
 from pattern_match import run_match
 from pprint import pprint
@@ -37,7 +39,9 @@ def test(input_string, pattern):
     print(f'pattern: {pattern}')
     pprint(counts)
 
-    expected = input_string.find(pattern)
+    pattern = re.sub('\*', '.', pattern)
+
+    expected = re.search(pattern, input_string).start() #input_string.find(pattern)
     countsDictionary = dict(counts)
     result = int( max(counts.items(), key = itemgetter(1))[0], 2)
     print(f'Expected: {expected}')
@@ -91,6 +95,10 @@ def test_two_char_patterns():
     for input_string in ('1100', '0110', '0011', '1111'):
         test(input_string, '11')
 
+    for input_string in ('0010', '1100', '0100', '1000', '0100', '0010'):
+        test(input_string, '10')
+
+
     test('00000000', '00')
     test('00000011', '00')
 
@@ -113,8 +121,10 @@ def test_three_char_patterns():
     for input_string in ('1100', '1101', '0110', '1110'):
         test(input_string, '110')
 
+
     for input_string in ('0110', '0111', '0011', '1011'):
         test(input_string, '011')
+
 
     for input_string in ('1110', '0111', '1111'):
         test(input_string, '111')
@@ -131,18 +141,53 @@ def test_three_char_patterns():
     test('11111111', '111')
     test('10000111', '111')
 
+def test_wildcard_patterns():
+    test('0000', '*')
+
+    test('1000', '*')
+    test('0100', '*')
+    test('0010', '*')
+    test('0001', '*')
+    test('0111', '*')
+    test('1011', '*')
+    test('1101', '*')
+    test('1110', '*')
+
+    test('00000001', '*')
+    test('10000001', '*')
+
+    for input_string in ('0011', '0010', '1100', '0100', '0000', '1000', '0100', '0010'):
+        test(input_string, '*0')
+        test(input_string, '**')
+
+    for input_string in ('1100', '1101', '0110', '1110'):
+        test(input_string, '11*')
+        test(input_string, '***')
+
+    for input_string in ('0110', '0111', '0011', '1011'):
+        test(input_string, '*11')
+        test(input_string, '*1*')
+
 def run_tests():
-    num_chars_in_pattern = argv[1]
-    if num_chars_in_pattern == 1:
-        test_single_char_patterns()
-    elif num_chars_in_pattern == 2:
-        test_two_char_patterns()
-    elif num_chars_in_pattern == 3:
-        test_three_char_patterns()
+    if argv[1] == '*':
+        test_wildcard_patterns()
+
     else:
-        test_single_char_patterns()
-        test_two_char_patterns()
-        test_three_char_patterns()
+        num_chars_in_pattern = int(argv[1])
+
+        if num_chars_in_pattern == 1:
+            test_single_char_patterns()
+        elif num_chars_in_pattern == 1:
+            test_single_char_patterns()
+        elif num_chars_in_pattern == 2:
+            test_two_char_patterns()
+        elif num_chars_in_pattern == 3:
+            test_three_char_patterns()
+        else:
+            test_wildcard_patterns()
+            test_single_char_patterns()
+            test_two_char_patterns()
+            test_three_char_patterns()
 
 if __name__ == '__main__':
     for i in range(10):

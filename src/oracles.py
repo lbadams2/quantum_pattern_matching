@@ -38,7 +38,8 @@ def generate_oracles(s, input_string, pattern_length, debug):
 
     wildcard_oracle_matrix = np.multiply( -1, np.identity( int( 2**s ) ) )
     # print(wildcard_oracle_matrix)
-    oracles['*'] = quantum_info.Operator( wildcard_oracle_matrix )
+    oracles['*'] = list()
+    oracles['*'].append( quantum_info.Operator( wildcard_oracle_matrix ) )
     return oracles
 
 def generate_oracles_single(s, input_string, pattern_length, debug):
