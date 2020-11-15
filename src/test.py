@@ -114,8 +114,8 @@ def test_three_char_patterns():
     for input_string in ('0110', '0111', '0011', '1011'):
         test(input_string, '011')
 
-    for input_string in ('1100', '0110', '0011', '1111'):
-        test(input_string, '11')
+    for input_string in ('1110', '0111', '1111'):
+        test(input_string, '111')
 
     test('00000000', '000')
     test('00000011', '000')
@@ -131,8 +131,8 @@ def test_three_char_patterns():
 
 def run_tests():
     # test_single_char_patterns()
-    test_two_char_patterns()
-    # test_three_char_patterns()
+    # test_two_char_patterns()
+    test_three_char_patterns()
 
 if __name__ == '__main__':
     for i in range(10):
