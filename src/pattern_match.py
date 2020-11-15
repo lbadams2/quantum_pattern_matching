@@ -67,6 +67,8 @@ qr_p1 {  -----------------------
 qubits_for_pattern_chars = dict()
 simulatorBackend = Aer.get_backend('qasm_simulator')
 
+debug = False
+
 # The control state is a list of 0's and 1's that encodes whether a 0 or a 1
 #   will activate the control for the i_th qubit in the control state string
 def _build_control_state(num_control_qubits):
@@ -141,7 +143,7 @@ def diffuser_old(qc, oracles, M, s):
 
 # Derived From Qiskit
 def diffuser(qc, M, s):
-    nqubits = s # M * s
+    nqubits = M * s
 
     # Apply transformation |s> -> |00..0> (H-gates)
     for qubit in range(nqubits):
@@ -166,29 +168,29 @@ def pattern_match(qc, oracles, pattern, M, s):
     # j: index of a char in the pattern
     # a. Choose j randomly from [1, M]
     j = randint( 0, len(pattern) - 1 )
-    # print(f'j = {j}')
-
-    # b. Apply Q_(p_j) to the set of s qubits that represent pattern char j
-    qubit_start_index = j * s
-    qubit_stop_index  = qubit_start_index + s
     pattern_char = pattern[j]
-    print(f'pattern_char = {pattern_char}')
-    qc.unitary(
-        oracles[ pattern_char ],
-        range( qubit_start_index, qubit_stop_index ),
-        label = f" ['{pattern[j]}' Oracle]"
-    )
-    qc.barrier()
 
-    # c. Apply Diffusion Operator to the entire state psi
-    # diffuser(qc, oracles, M, s)
-    diffuser(qc, M, s)
+    for single_position_oracle in oracles[pattern_char]:
+        # b. Apply Q_(p_j) to the set of s qubits that represent pattern char j
+        qubit_start_index = j * s
+        qubit_stop_index  = qubit_start_index + s
+        qc.unitary(
+            single_position_oracle,
+            range( qubit_start_index, qubit_stop_index ),
+            label = f" ['{pattern[j]}' Oracle]"
+        )
+        qc.barrier()
 
-    qc.barrier()
+        # c. Apply Diffusion Operator to the entire state psi
+        # diffuser(qc, oracles, M, s)
+        diffuser(qc, M, s)
+
+        qc.barrier()
 
     return
 
-def run_match(input_string, pattern):
+def run_match(input_string, pattern, is_test_run):
+    debug = not is_test_run
     if input_string == None:
         input_string = argv[1]
 
@@ -199,26 +201,32 @@ def run_match(input_string, pattern):
         input_string = '01'.ljust( 2**3, '0' )
     padded_length = 2**( math.ceil(math.log2(len(input_string))) )
     input_string = input_string.ljust( padded_length, '0' )
-    print( f'input_string = {input_string}' )
+    if debug:
+        print( f'input_string = {input_string}' )
     N = len(input_string)
 
     if pattern == "" or pattern == None:
         pattern = '1'
     M = len(pattern)
-    print( f'pattern = {pattern}' )
+
+    if debug:
+        print( f'pattern = {pattern}' )
 
     # N - M + 1 = 2^s
     s = math.ceil( math.log2(N - M + 1) ) # round up if N - M + 1 is not a power of 2
-    print(f's = {s}')
+
+    if debug:
+        print(f's = {s}')
 
     qc = QuantumCircuit()
-    oracles = generate_oracles( s, input_string, len(pattern) )
+    oracles = generate_oracles( s, input_string, len(pattern), debug )
 
     create_initial_state(qc, s, M)
 
     # run ~sqrt(N) times
     number_of_iterations = 1 # math.ceil( math.sqrt( math.pow(s, 2) ) )
-    print(f'number_of_iterations = {number_of_iterations}')
+    if debug:
+        print(f'number_of_iterations = {number_of_iterations}')
     for q in range(number_of_iterations):
         pattern_match( qc, oracles, pattern, M, s )
 
@@ -226,8 +234,9 @@ def run_match(input_string, pattern):
     qc.add_register(classicalRegisters)
     qc.measure( qubits_for_pattern_chars[0], classicalRegisters )
 
-    # qc.draw(output = 'mpl', plot_barriers = True, filename = "test2.png")
-    print( qc )
+    if debug:
+        # qc.draw(output = 'mpl', plot_barriers = True, filename = "test2.png")
+        print( qc )
 
     backend = simulatorBackend
     # backend = IBMQBackend
@@ -239,6 +248,6 @@ def run_match(input_string, pattern):
     return counts
 
 if __name__ == '__main__':
-    counts = run_match(None, None)
+    counts = run_match(None, None, False)
 
     pprint.pprint(counts)
