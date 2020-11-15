@@ -41,7 +41,7 @@ from qiskit import quantum_info
 
 from qiskit.circuit.library.standard_gates import XGate
 
-from oracles import generate_oracles
+from oracles import generate_oracles, generate_oracles_single
 from random import randint
 from sys import argv
 
@@ -125,8 +125,7 @@ def create_initial_state(qc, s, M):
         _add_pattern_char_state(qc, i, s)
 
 def diffuser_old(qc, oracles, M, s):
-    for j in range(0, len(qubits_for_pattern_chars)):
-        qc.h( qubits_for_pattern_chars[j] )
+    qc.h( qubits_for_pattern_chars[0] )
 
     diffuser_matrix = np.identity( int( 2**(s * M) ) )
     diffuser_matrix[0, 0] = -1
@@ -138,12 +137,11 @@ def diffuser_old(qc, oracles, M, s):
         label = " U'"
     )
 
-    for j in range(0, len(qubits_for_pattern_chars)):
-        qc.h( qubits_for_pattern_chars[j] )
+    qc.h( qubits_for_pattern_chars[0] )
 
 # Derived From Qiskit
-def diffuser(qc, M, s):
-    nqubits = M * s
+def diffuser_new(qc, M, s):
+    nqubits = s # M * s
 
     # Apply transformation |s> -> |00..0> (H-gates)
     for qubit in range(nqubits):
@@ -153,9 +151,9 @@ def diffuser(qc, M, s):
         qc.x(qubit)
     # Do multi-controlled-Z gate
     qc.barrier()
-    qc.h(nqubits-1)
-    qc.mct(list(range(nqubits-1)), nqubits-1)  # multi-controlled-toffoli
-    qc.h(nqubits-1)
+    qc.h(nqubits - 1)
+    qc.mct(list(range(nqubits - 1)), nqubits - 1)  # multi-controlled-toffoli
+    qc.h(nqubits - 1)
     qc.barrier()
     # Apply transformation |11..1> -> |00..0>
     for qubit in range(nqubits):
@@ -164,7 +162,33 @@ def diffuser(qc, M, s):
     for qubit in range(nqubits):
         qc.h(qubit)
 
-def pattern_match(qc, oracles, pattern, M, s):
+def pattern_match_old(qc, oracles, pattern, M, s):
+    # j: index of a char in the pattern
+    # a. Choose j randomly from [1, M]
+    j = randint( 0, len(pattern) - 1 )
+    # print(f'j = {j}')
+
+    # b. Apply Q_(p_j) to the set of s qubits that represent pattern char j
+    qubit_start_index = j * s
+    qubit_stop_index  = qubit_start_index + s
+    pattern_char = pattern[j]
+    print(f'pattern_char = {pattern_char}')
+    qc.unitary(
+        oracles[ pattern_char ],
+        range( qubit_start_index, qubit_stop_index ),
+        label = f" ['{pattern[j]}' Oracle]"
+    )
+    qc.barrier()
+
+    # c. Apply Diffusion Operator to the entire state psi
+    # diffuser(qc, oracles, M, s)
+    diffuser_old(qc, oracles, M, s)
+
+    qc.barrier()
+
+    return
+
+def pattern_match_new(qc, oracles, pattern, M, s):
     # j: index of a char in the pattern
     # a. Choose j randomly from [1, M]
     j = randint( 0, len(pattern) - 1 )
@@ -183,7 +207,8 @@ def pattern_match(qc, oracles, pattern, M, s):
 
         # c. Apply Diffusion Operator to the entire state psi
         # diffuser(qc, oracles, M, s)
-        diffuser(qc, M, s)
+        diffuser_old(qc, oracles, M, s)
+        # diffuser_new(qc, M, s)
 
         qc.barrier()
 
@@ -219,6 +244,7 @@ def run_match(input_string, pattern, is_test_run):
         print(f's = {s}')
 
     qc = QuantumCircuit()
+    # oracles = generate_oracles_single( s, input_string, len(pattern), debug )
     oracles = generate_oracles( s, input_string, len(pattern), debug )
 
     create_initial_state(qc, s, M)
@@ -228,7 +254,7 @@ def run_match(input_string, pattern, is_test_run):
     if debug:
         print(f'number_of_iterations = {number_of_iterations}')
     for q in range(number_of_iterations):
-        pattern_match( qc, oracles, pattern, M, s )
+        pattern_match_new( qc, oracles, pattern, M, s )
 
     classicalRegisters = ClassicalRegister(s)
     qc.add_register(classicalRegisters)

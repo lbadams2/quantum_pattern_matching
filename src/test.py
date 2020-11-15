@@ -23,7 +23,7 @@ pass_count = 0
 valid_count = 0
 fail_count = 0
 total_count = 0
-# expected: a list
+
 def test(input_string, pattern):
     global pass_count
     global valid_count
@@ -130,9 +130,16 @@ def test_three_char_patterns():
     test('10000111', '111')
 
 def run_tests():
-    # test_single_char_patterns()
-    # test_two_char_patterns()
-    test_three_char_patterns()
+    if sys.argv[1] == 1:
+        test_single_char_patterns()
+    elif sys.argv[2] == 2:
+        test_two_char_patterns()
+    elif sys.argv[3] == 3:
+        test_three_char_patterns()
+    else:
+        test_single_char_patterns()
+        test_two_char_patterns()
+        test_three_char_patterns()
 
 if __name__ == '__main__':
     for i in range(10):
