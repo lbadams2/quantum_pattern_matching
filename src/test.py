@@ -173,10 +173,16 @@ def test_wildcard_patterns():
         test(input_string, '*1*')
 
 def run_tests():
-    if argv[1] == '*':
+    if len(argv) == 1:
+        test_wildcard_patterns()
+        test_single_char_patterns()
+        test_two_char_patterns()
+        test_three_char_patterns()
+
+    elif argv[1] == '*':
         test_wildcard_patterns()
 
-    else:
+    elif re.search('\d+', argv[1]):
         num_chars_in_pattern = int(argv[1])
 
         if num_chars_in_pattern == 1:
@@ -187,11 +193,10 @@ def run_tests():
             test_two_char_patterns()
         elif num_chars_in_pattern == 3:
             test_three_char_patterns()
-        else:
-            test_wildcard_patterns()
-            test_single_char_patterns()
-            test_two_char_patterns()
-            test_three_char_patterns()
+    else:
+        print("Invalid Input")
+        print("python test.py [ \* | <A NUMBER> ]")
+
 
 if __name__ == '__main__':
     for i in range(10):
