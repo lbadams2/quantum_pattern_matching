@@ -293,10 +293,12 @@ if __name__ == '__main__':
 
             num_matches = valid_count + pass_count
             test_result.append(f'\tMatches         : {num_matches} tests')
-            test_result.append('\tFail Percentage : {fail_perc:.2f} %'
+            test_result.append('\tFail Percentage       : {fail_perc:.2f} %'
                 .format(fail_perc = fail_count / total_count * 100))
-            test_result.append('\tMatch Percentage: {match_perc:.2f} %'
+            test_result.append('\tMatch Percentage      : {match_perc:.2f} %'
                 .format(match_perc = num_matches / total_count * 100))
+            test_result.append('\First Match Percentage: {first_match_perc:.2f} %'
+                .format(first_match_perc = pass_count / total_count * 100))
 
             test_results.append( '\n'.join(test_result) )
             test_count += 1
