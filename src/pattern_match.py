@@ -65,6 +65,13 @@ qr_p1 {  -----------------------
 
 '''
 qubits_for_pattern_chars = dict()
+
+IBMQ.load_account()
+provider = IBMQ.get_provider(hub = 'ibm-q-ncsu', group = 'nc-state', project = 'grad-qc-class')
+
+IBMQBackend = provider.get_backend('ibmq_paris')
+# IBMQBackend = provider.get_backend('ibmq_qasm_simulator')
+# IBMQBackend = provider.get_backend('ibmq_toronto')
 simulatorBackend = Aer.get_backend('qasm_simulator')
 
 debug = False
@@ -264,8 +271,8 @@ def run_match(input_string, pattern, is_test_run):
         # qc.draw(output = 'mpl', plot_barriers = True, filename = "test2.png")
         print( qc )
 
-    backend = simulatorBackend
-    # backend = IBMQBackend
+    # backend = simulatorBackend
+    backend = IBMQBackend
     shots = 2**13
     job = execute(qc, backend = backend, shots = shots)
     results = job.result()

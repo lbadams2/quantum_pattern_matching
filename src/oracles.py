@@ -36,10 +36,20 @@ def generate_oracles(s, input_string, pattern_length, debug):
                     print()
                 oracles[pattern_char].append( quantum_info.Operator( pattern_char_oracle_matrix ) )
 
-    wildcard_oracle_matrix = np.multiply( -1, np.identity( int( 2**s ) ) )
-    # print(wildcard_oracle_matrix)
+    # wildcard_oracle_matrix = np.multiply( -1, np.identity( int( 2**s ) ) )
+    # # wildcard_oracle_matrix = np.identity( int( 2**s ) )
+    # # print(wildcard_oracle_matrix)
+    # oracles['*'] = list()
+    # oracles['*'].append( quantum_info.Operator( wildcard_oracle_matrix ) )
+
     oracles['*'] = list()
+    wildcard_oracle_matrix = np.identity( int( 2**s ) )
+
+    for i in range( N - M + 1 ):
+        pattern_char_oracle_matrix[i, i] = -1
+
     oracles['*'].append( quantum_info.Operator( wildcard_oracle_matrix ) )
+
     return oracles
 
 def generate_oracles_single(s, input_string, pattern_length, debug):

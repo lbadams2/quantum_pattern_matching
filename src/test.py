@@ -23,6 +23,7 @@ from pprint import pprint
 from operator import itemgetter
 from termcolor import colored
 from itertools import permutations
+from random import randrange
 
 from sys import argv
 
@@ -67,6 +68,14 @@ def test(input_string, pattern):
             print( colored('Test Failed', 'red') )
 
     print()
+
+def random_string(alphabet, N):
+    alphabet_len = len(alphabet)
+    rand_string = ''
+    for _ in range(N):
+        char = alphabet[ randrange(alphabet_len) ]
+        rand_string += str(char)
+    return rand_string
 
 def test_single_char_patterns():
     test('0000', '0')
@@ -172,6 +181,14 @@ def test_wildcard_patterns():
         test(input_string, '*11')
         test(input_string, '*1*')
 
+def test_random_pattern_and_input():
+    N = 8
+    M = 2
+    alphabet = '01*'
+
+    print(random_string(alphabet, N))
+
+
 def run_tests():
     if len(argv) == 1:
         test_wildcard_patterns()
@@ -181,6 +198,9 @@ def run_tests():
 
     elif argv[1] == '*':
         test_wildcard_patterns()
+
+    elif argv[1] == 'random' or argv[1] == '?' or argv[1] == 'rand':
+        test_random_pattern_and_input()
 
     elif re.search('\d+', argv[1]):
         num_chars_in_pattern = int(argv[1])
@@ -199,7 +219,7 @@ def run_tests():
 
 
 if __name__ == '__main__':
-    for i in range(10):
+    for i in range(1):
         run_tests()
 
     print("Results:")
