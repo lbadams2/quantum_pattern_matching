@@ -41,7 +41,7 @@ from qiskit import quantum_info
 
 from qiskit.circuit.library.standard_gates import XGate
 
-from oracles import generate_oracles, generate_oracles_single
+from oracles import generate_many_oracles, generate_oracles_single
 from random import randint
 from sys import argv
 
@@ -66,15 +66,11 @@ qr_p1 {  -----------------------
 '''
 qubits_for_pattern_chars = dict()
 
-IBMQ.load_account()
-provider = IBMQ.get_provider(hub = 'ibm-q-ncsu', group = 'nc-state', project = 'grad-qc-class')
-
-IBMQBackend = provider.get_backend('ibmq_paris')
-# IBMQBackend = provider.get_backend('ibmq_qasm_simulator')
-# IBMQBackend = provider.get_backend('ibmq_toronto')
 simulatorBackend = Aer.get_backend('qasm_simulator')
 
 debug = False
+use_many_oracles = False
+use_gates_diffuser = False
 
 # The control state is a list of 0's and 1's that encodes whether a 0 or a 1
 #   will activate the control for the i_th qubit in the control state string
@@ -131,7 +127,7 @@ def create_initial_state(qc, s, M):
     for i in range(1, M):
         _add_pattern_char_state(qc, i, s)
 
-def diffuser_old(qc, oracles, M, s):
+def diffuser_matrix(qc, oracles, M, s):
     qc.h( qubits_for_pattern_chars[0] )
 
     diffuser_matrix = np.identity( int( 2**(s * M) ) )
@@ -147,33 +143,39 @@ def diffuser_old(qc, oracles, M, s):
     qc.h( qubits_for_pattern_chars[0] )
 
 # Derived From Qiskit
-def diffuser_new(qc, M, s):
-    nqubits = s # M * s
+def diffuser_gates(qc, M, s):
+    nqubits = s
 
-    # Apply transformation |s> -> |00..0> (H-gates)
-    for qubit in range(nqubits):
-        qc.h(qubit)
-    # Apply transformation |00..0> -> |11..1> (X-gates)
-    for qubit in range(nqubits):
-        qc.x(qubit)
-    # Do multi-controlled-Z gate
-    qc.barrier()
-    qc.h(nqubits - 1)
-    qc.mct(list(range(nqubits - 1)), nqubits - 1)  # multi-controlled-toffoli
-    qc.h(nqubits - 1)
-    qc.barrier()
-    # Apply transformation |11..1> -> |00..0>
-    for qubit in range(nqubits):
-        qc.x(qubit)
-    # Apply transformation |00..0> -> |s>
-    for qubit in range(nqubits):
-        qc.h(qubit)
+    if nqubits == 2:
+        qc.h([0,1])
+        qc.z([0,1])
+        qc.cz(0,1)
+        qc.h([0,1])
 
-def pattern_match_old(qc, oracles, pattern, M, s):
+    else:
+        # Apply transformation |s> -> |00..0> (H-gates)
+        for qubit in range(nqubits):
+            qc.h(qubit)
+        # Apply transformation |00..0> -> |11..1> (X-gates)
+        for qubit in range(nqubits):
+            qc.x(qubit)
+        # Do multi-controlled-Z gate
+        qc.barrier()
+        qc.h(nqubits - 1)
+        qc.mct(list(range(nqubits - 1)), nqubits - 1)  # multi-controlled-toffoli
+        qc.h(nqubits - 1)
+        qc.barrier()
+        # Apply transformation |11..1> -> |00..0>
+        for qubit in range(nqubits):
+            qc.x(qubit)
+        # Apply transformation |00..0> -> |s>
+        for qubit in range(nqubits):
+            qc.h(qubit)
+
+def pattern_match_single_oracles(qc, oracles, pattern, M, s):
     # j: index of a char in the pattern
     # a. Choose j randomly from [1, M]
     j = randint( 0, len(pattern) - 1 )
-    # print(f'j = {j}')
 
     # b. Apply Q_(p_j) to the set of s qubits that represent pattern char j
     qubit_start_index = j * s
@@ -188,14 +190,16 @@ def pattern_match_old(qc, oracles, pattern, M, s):
     qc.barrier()
 
     # c. Apply Diffusion Operator to the entire state psi
-    # diffuser(qc, oracles, M, s)
-    diffuser_old(qc, oracles, M, s)
+    if use_gates_diffuser:
+        diffuser_gates(qc, M, s)
+    else:
+        diffuser_matrix(qc, oracles, M, s)
 
     qc.barrier()
 
     return
 
-def pattern_match_new(qc, oracles, pattern, M, s):
+def pattern_match_many_oracles(qc, oracles, pattern, M, s):
     # j: index of a char in the pattern
     # a. Choose j randomly from [1, M]
     j = randint( 0, len(pattern) - 1 )
@@ -213,16 +217,26 @@ def pattern_match_new(qc, oracles, pattern, M, s):
         qc.barrier()
 
         # c. Apply Diffusion Operator to the entire state psi
-        # diffuser(qc, oracles, M, s)
-        diffuser_old(qc, oracles, M, s)
-        # diffuser_new(qc, M, s)
+        if use_gates_diffuser:
+            diffuser_gates(qc, M, s)
+        else:
+            diffuser_matrix(qc, oracles, M, s)
 
         qc.barrier()
 
     return
 
-def run_match(input_string, pattern, is_test_run):
+def run_match(input_string, pattern, **keyword_args):
+    global use_gates_diffuser
+    is_test_run = keyword_args['is_test_run']
+    use_ibm = keyword_args['use_ibm']
     debug = not is_test_run
+
+    if keyword_args['diffuser'] == 'gates': # else use matrix
+        use_gates_diffuser = True
+
+    use_many_oracles = keyword_args['oracles'] == 'many'
+
     if input_string == None:
         input_string = argv[1]
 
@@ -251,8 +265,10 @@ def run_match(input_string, pattern, is_test_run):
         print(f's = {s}')
 
     qc = QuantumCircuit()
-    # oracles = generate_oracles_single( s, input_string, len(pattern), debug )
-    oracles = generate_oracles( s, input_string, len(pattern), debug )
+    if use_many_oracles:
+        oracles = generate_many_oracles( s, input_string, len(pattern), debug )
+    else:
+        oracles = generate_oracles_single( s, input_string, len(pattern), debug )
 
     create_initial_state(qc, s, M)
 
@@ -261,7 +277,10 @@ def run_match(input_string, pattern, is_test_run):
     if debug:
         print(f'number_of_iterations = {number_of_iterations}')
     for q in range(number_of_iterations):
-        pattern_match_new( qc, oracles, pattern, M, s )
+        if use_many_oracles:
+            pattern_match_many_oracles( qc, oracles, pattern, M, s )
+        else:
+            pattern_match_single_oracles(qc, oracles, pattern, M, s)
 
     classicalRegisters = ClassicalRegister(s)
     qc.add_register(classicalRegisters)
@@ -271,8 +290,16 @@ def run_match(input_string, pattern, is_test_run):
         # qc.draw(output = 'mpl', plot_barriers = True, filename = "test2.png")
         print( qc )
 
-    # backend = simulatorBackend
-    backend = IBMQBackend
+    if use_ibm:
+        IBMQ.load_account()
+        provider = IBMQ.get_provider(hub = 'ibm-q-ncsu', group = 'nc-state', project = 'grad-qc-class')
+
+        IBMQBackend = provider.get_backend('ibmq_paris')
+        # IBMQBackend = provider.get_backend('ibmq_qasm_simulator')
+        # IBMQBackend = provider.get_backend('ibmq_toronto')
+        backend = IBMQBackend
+    else:
+        backend = simulatorBackend
     shots = 2**13
     job = execute(qc, backend = backend, shots = shots)
     results = job.result()
@@ -281,6 +308,13 @@ def run_match(input_string, pattern, is_test_run):
     return counts
 
 if __name__ == '__main__':
-    counts = run_match(None, None, False)
+    counts = run_match(
+        None,
+        None,
+        is_test_run = False,
+        use_ibm = False,
+        oracles = 'many', # 'many' or 'single'
+        diffuser = 'gates' # 'gates' or 'matrix'
+    )
 
     pprint.pprint(counts)

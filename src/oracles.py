@@ -16,7 +16,7 @@ import numpy as np
 alphabet = ('0', '1')
 
 
-def generate_oracles(s, input_string, pattern_length, debug):
+def generate_many_oracles(s, input_string, pattern_length, debug):
     oracles = dict()
 
     for pattern_char in alphabet:
@@ -36,12 +36,6 @@ def generate_oracles(s, input_string, pattern_length, debug):
                     print()
                 oracles[pattern_char].append( quantum_info.Operator( pattern_char_oracle_matrix ) )
 
-    # wildcard_oracle_matrix = np.multiply( -1, np.identity( int( 2**s ) ) )
-    # # wildcard_oracle_matrix = np.identity( int( 2**s ) )
-    # # print(wildcard_oracle_matrix)
-    # oracles['*'] = list()
-    # oracles['*'].append( quantum_info.Operator( wildcard_oracle_matrix ) )
-
     oracles['*'] = list()
     wildcard_oracle_matrix = np.identity( int( 2**s ) )
 
@@ -55,7 +49,6 @@ def generate_oracles(s, input_string, pattern_length, debug):
 def generate_oracles_single(s, input_string, pattern_length, debug):
     oracles = dict()
     for pattern_char in alphabet:
-        # count = 0
 
         pattern_char_oracle_matrix = np.identity( int( 2**s ) )
         # TODO: Imitate tensor products
@@ -66,9 +59,6 @@ def generate_oracles_single(s, input_string, pattern_length, debug):
             # print(f'{input_string[i]} =? {pattern_char}')
             if input_string[i] == pattern_char:
                 pattern_char_oracle_matrix[i, i] = -1
-            # count = count + 1
-            # if count == 2:
-            #     break
 
         if debug:
             print(f"Oracle for '{pattern_char}'")

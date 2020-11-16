@@ -14,6 +14,7 @@ References:
     https://docs.python.org/3/library/re.html
     https://docs.python.org/3/library/re.html#match-objects
     https://docs.python.org/3/howto/regex.html
+    https://stackoverflow.com/questions/1419046/normal-arguments-vs-keyword-arguments
 '''
 # perms = [''.join(p) for p in permutations('stack')]
 import re
@@ -32,13 +33,29 @@ valid_count = 0
 fail_count = 0
 total_count = 0
 
+use_ibm = False
+oracle_type = ''
+diffuser_type = ''
+
 def test(input_string, pattern):
     global pass_count
     global valid_count
     global fail_count
     global total_count
 
-    counts = run_match(input_string, pattern, True)
+    global use_ibm
+    global oracle_type
+    global diffuser_type
+
+    counts = run_match(
+        input_string,
+        pattern,
+        is_test_run = True,
+        use_ibm = use_ibm,
+        oracles = oracle_type,  # 'many' or 'single'
+        diffuser = diffuser_type # 'gates' or 'matrix'
+    )
+
     print(f'input  : {input_string}')
     print(f'pattern: {pattern}')
     pprint(counts)
@@ -58,7 +75,6 @@ def test(input_string, pattern):
         print( colored('Test Passed', 'green') )
     else:
         result_substring = input_string[ result : result + len(pattern) ]
-        # print(f'result_substring = {result_substring}')
         result_substring_matchObject = re.search(pattern, result_substring)
         if len(result_substring) == len(pattern) and result_substring_matchObject != None:
             valid_count = valid_count + 1
@@ -125,21 +141,21 @@ def test_two_char_patterns():
     test('10000011', '11')
 
 def test_three_char_patterns():
-    for input_string in ('0001', '1000', '0000'):
+    for input_string in ('00011111', '10001111', '00001111'):
         test(input_string, '000')
 
-    for input_string in ('1010', '0101'):
+    for input_string in ('10101111', '01011111'):
         test(input_string, '101')
 
-    for input_string in ('1100', '1101', '0110', '1110'):
+    for input_string in ('11001111', '11011111', '01101111', '11101111'):
         test(input_string, '110')
 
 
-    for input_string in ('0110', '0111', '0011', '1011'):
+    for input_string in ('01101111', '01111111', '00111111', '10111111'):
         test(input_string, '011')
 
 
-    for input_string in ('1110', '0111', '1111'):
+    for input_string in ('11101111', '01111111', '11111111'):
         test(input_string, '111')
 
     test('00000000', '000')
@@ -173,20 +189,34 @@ def test_wildcard_patterns():
         test(input_string, '*0')
         test(input_string, '**')
 
-    for input_string in ('1100', '1101', '0110', '1110'):
+    for input_string in ('11000000', '11010000', '01100000', '11100000'):
         test(input_string, '11*')
         test(input_string, '***')
 
-    for input_string in ('0110', '0111', '0011', '1011'):
+    for input_string in ('01101111', '01111111', '00111111', '10111111'):
         test(input_string, '*11')
         test(input_string, '*1*')
 
-def test_random_pattern_and_input():
+def test_random_pattern_and_input(use_wildcards):
     N = 8
     M = 2
-    alphabet = '01*'
+    alphabet = '01'
 
-    print(random_string(alphabet, N))
+    num_random_tests = 20
+
+    while num_random_tests > 0:
+        input_string = random_string(alphabet, N)
+
+        if use_wildcards:
+            pattern = random_string(alphabet + '*', M)
+            regex_pattern = re.sub('\*', '.', pattern)
+        else:
+            pattern = random_string(alphabet, M)
+            regex_pattern = pattern
+
+        if re.search(regex_pattern, input_string):
+            test(input_string, pattern)
+            num_random_tests -= 1
 
 
 def run_tests():
@@ -195,12 +225,17 @@ def run_tests():
         test_single_char_patterns()
         test_two_char_patterns()
         test_three_char_patterns()
+        test_random_pattern_and_input(False)
+        test_random_pattern_and_input(True)
 
     elif argv[1] == '*':
         test_wildcard_patterns()
 
     elif argv[1] == 'random' or argv[1] == '?' or argv[1] == 'rand':
-        test_random_pattern_and_input()
+        if len(argv) == 3 and argv[2] == '*':
+            test_random_pattern_and_input(True)
+        else:
+            test_random_pattern_and_input(False)
 
     elif re.search('\d+', argv[1]):
         num_chars_in_pattern = int(argv[1])
@@ -219,19 +254,52 @@ def run_tests():
 
 
 if __name__ == '__main__':
-    for i in range(1):
-        run_tests()
+    use_ibm = False
 
-    print("Results:")
-    print(f'\tFailed: {fail_count} tests')
-    print(f'\tValid : {valid_count} tests')
-    print(f'\tPassed: {pass_count} tests')
-    print('\t------------------------')
-    print(f'\tTotal: {total_count} tests')
-    print('\t------------------------')
-    num_matches = valid_count + pass_count
-    print(f'\tMatches         : {num_matches} tests')
-    print('\tFail Percentage : {fail_perc:.2f} %'
-        .format(fail_perc = fail_count / total_count * 100))
-    print('\tMatch Percentage: {match_perc:.2f} %'
-        .format(match_perc = num_matches / total_count * 100))
+    test_count = 1
+    test_results = list()
+    for this_oracle_type in ('many', 'single'):
+        for this_diffuser_type in ('gates', 'matrix'):
+            oracle_type = this_oracle_type
+            diffuser_type = this_diffuser_type
+
+            pass_count = 0
+            valid_count = 0
+            fail_count = 0
+            total_count = 0
+
+            test_result = list()
+
+            header_lines = list()
+            header_lines.append('================================')
+            header_lines.append(f'Test {test_count}:')
+            header_lines.append(f'\tOracle Type: {oracle_type}')
+            header_lines.append(f'\tDiffuser Type: {diffuser_type}')
+            header = '\n'.join(header_lines)
+            print(header)
+
+            for i in range(10):
+                run_tests()
+
+            test_result.append(header)
+
+            test_result.append("Results:")
+            test_result.append(f'\tFailed: {fail_count} tests')
+            test_result.append(f'\tValid : {valid_count} tests')
+            test_result.append(f'\tPassed: {pass_count} tests')
+            test_result.append('\t------------------------')
+            test_result.append(f'\tTotal: {total_count} tests')
+            test_result.append('\t------------------------')
+
+            num_matches = valid_count + pass_count
+            test_result.append(f'\tMatches         : {num_matches} tests')
+            test_result.append('\tFail Percentage : {fail_perc:.2f} %'
+                .format(fail_perc = fail_count / total_count * 100))
+            test_result.append('\tMatch Percentage: {match_perc:.2f} %'
+                .format(match_perc = num_matches / total_count * 100))
+
+            test_results.append( '\n'.join(test_result) )
+            test_count += 1
+
+    for test_result in test_results:
+        print(test_result)
