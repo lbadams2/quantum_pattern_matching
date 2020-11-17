@@ -181,7 +181,7 @@ def pattern_match_single_oracles(qc, oracles, pattern, M, s):
     qubit_start_index = j * s
     qubit_stop_index  = qubit_start_index + s
     pattern_char = pattern[j]
-    print(f'pattern_char = {pattern_char}')
+
     qc.unitary(
         oracles[ pattern_char ],
         range( qubit_start_index, qubit_stop_index ),
@@ -237,6 +237,8 @@ def run_match(input_string, pattern, **keyword_args):
 
     use_many_oracles = keyword_args['oracles'] == 'many'
 
+    alphabet = keyword_args['alphabet']
+
     if input_string == None:
         input_string = argv[1]
 
@@ -265,15 +267,16 @@ def run_match(input_string, pattern, **keyword_args):
         print(f's = {s}')
 
     qc = QuantumCircuit()
+
     if use_many_oracles:
-        oracles = generate_many_oracles( s, input_string, len(pattern), debug )
+        oracles = generate_many_oracles( s, input_string, len(pattern), debug, alphabet )
     else:
-        oracles = generate_oracles_single( s, input_string, len(pattern), debug )
+        oracles = generate_oracles_single( s, input_string, len(pattern), debug, alphabet )
 
     create_initial_state(qc, s, M)
 
     # run ~sqrt(N) times
-    number_of_iterations = 1 # math.ceil( math.sqrt( math.pow(s, 2) ) )
+    number_of_iterations = math.ceil( math.sqrt( math.pow(s, 2) ) )
     if debug:
         print(f'number_of_iterations = {number_of_iterations}')
     for q in range(number_of_iterations):
