@@ -1,5 +1,7 @@
 # Quantum Pattern Matching
 
+All code (including tests) is located in the `/src` directory.
+
 ## Running the main program
 ```
 python pattern_match.py <INPUT_STRING> <PATTERN>
