@@ -318,7 +318,7 @@ if __name__ == '__main__':
         use_ibm = False,
         oracles = 'many', # 'many' or 'single'
         diffuser = 'gates', # 'gates' or 'matrix'
-        alphabet = ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')
+        alphabet = ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 't')
     )
 
     pprint.pprint(counts)

@@ -22,7 +22,6 @@ def generate_many_oracles(s, input_string, pattern_length, debug, input_alphabet
     if input_alphabet:
         alphabet = input_alphabet
 
-    print("Charizard: " + ''.join(alphabet) )
     oracles = dict()
 
     for pattern_char in alphabet:
