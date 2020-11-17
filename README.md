@@ -18,7 +18,7 @@ Make sure that the alphabet contains all letters in input string.
 
 ## Running the tests
 ```
-python test.py [ \* | <NUMBER OF CHARS IN PATTERN> | exact | exact \* ]
+python test.py [ \* | <NUMBER OF CHARS IN PATTERN (1, 2, or 3)> | exact | exact \* ]
 ```
 * `\*` runs wildcard tests
 * `exact` runs tests using the latin alphabet for exact matches
