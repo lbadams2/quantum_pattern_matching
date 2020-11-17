@@ -10,5 +10,5 @@ python pattern_match.py <INPUT_STRING> <PATTERN>
 ```
 python test.py [ \* | <NUMBER OF CHARS IN PATTERN> | exact ]
 ```
-* \\* runs wildcard tests
-* exact runs tests using the latin alphabet for exact matches
+* `\*` runs wildcard tests
+* `exact` runs tests using the latin alphabet for exact matches
