@@ -18,9 +18,11 @@ alphabet = ('0', '1')
 
 
 def generate_many_oracles(s, input_string, pattern_length, debug, input_alphabet):
+    global alphabet
     if input_alphabet:
         alphabet = input_alphabet
 
+    print("Charizard: " + ''.join(alphabet) )
     oracles = dict()
 
     for pattern_char in alphabet:
@@ -51,6 +53,7 @@ def generate_many_oracles(s, input_string, pattern_length, debug, input_alphabet
     return oracles
 
 def generate_oracles_single(s, input_string, pattern_length, debug, input_alphabet):
+    global alphabet
     if input_alphabet:
         alphabet = input_alphabet
 

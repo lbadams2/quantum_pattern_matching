@@ -226,14 +226,14 @@ def test_exact_matches():
     global alphabet
     alphabet = ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')
 
-    test('aaab', 'b')
-    test('aaba', 'b')
-    test('abaa', 'b')
-    test('baaa', 'b')
-
-    for char in alphabet:
-        test('abcdefgh', char)
-
+    # test('aaab', 'b')
+    # test('aaba', 'b')
+    # test('abaa', 'b')
+    # test('baaa', 'b')
+    #
+    # for char in alphabet:
+    #     test('abcdefgh', char)
+    #
     for pattern_length in (2, 3, 4, 5):
         for i in range(len(alphabet) - (pattern_length - 1) ):
             pattern = ''.join( alphabet[i : i + pattern_length] )
@@ -280,7 +280,7 @@ def run_tests():
 
 
 if __name__ == '__main__':
-    use_ibm = False
+    use_ibm = True
 
     test_count = 1
     test_results = list()
@@ -304,7 +304,7 @@ if __name__ == '__main__':
             header = '\n'.join(header_lines)
             print(header)
 
-            for i in range(10):
+            for i in range(1):
                 run_tests()
 
             test_result.append(header)
