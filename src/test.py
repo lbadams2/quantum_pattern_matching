@@ -37,6 +37,8 @@ use_ibm = False
 oracle_type = ''
 diffuser_type = ''
 
+alphabet = None
+
 def test(input_string, pattern):
     global pass_count
     global valid_count
@@ -47,13 +49,15 @@ def test(input_string, pattern):
     global oracle_type
     global diffuser_type
 
+    print('alphabet = ' + ''.join(alphabet))
     counts = run_match(
         input_string,
         pattern,
         is_test_run = True,
         use_ibm = use_ibm,
         oracles = oracle_type,  # 'many' or 'single'
-        diffuser = diffuser_type # 'gates' or 'matrix'
+        diffuser = diffuser_type, # 'gates' or 'matrix'
+        alphabet = alphabet
     )
 
     print(f'input  : {input_string}')
@@ -218,6 +222,25 @@ def test_random_pattern_and_input(use_wildcards):
             test(input_string, pattern)
             num_random_tests -= 1
 
+def test_exact_matches():
+    global alphabet
+    alphabet = ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')
+
+    # test('aaab', 'b')
+    # test('aaba', 'b')
+    # test('abaa', 'b')
+    # test('baaa', 'b')
+    #
+    # for char in alphabet:
+    #     test('abcdefgh', char)
+    #
+    for pattern_length in (2, 3, 4, 5):
+        for i in range(len(alphabet) - (pattern_length - 1) ):
+            pattern = ''.join( alphabet[i : i + pattern_length] )
+            print(f"pattern: {pattern}")
+            test('abcdefgh', pattern)
+
+
 
 def run_tests():
     if len(argv) == 1:
@@ -230,6 +253,9 @@ def run_tests():
 
     elif argv[1] == '*':
         test_wildcard_patterns()
+
+    elif argv[1] == 'exact':
+        test_exact_matches()
 
     elif argv[1] == 'random' or argv[1] == '?' or argv[1] == 'rand':
         if len(argv) == 3 and argv[2] == '*':
@@ -254,7 +280,7 @@ def run_tests():
 
 
 if __name__ == '__main__':
-    use_ibm = False
+    use_ibm = True
 
     test_count = 1
     test_results = list()
@@ -278,7 +304,7 @@ if __name__ == '__main__':
             header = '\n'.join(header_lines)
             print(header)
 
-            for i in range(10):
+            for i in range(1):
                 run_tests()
 
             test_result.append(header)
@@ -297,7 +323,7 @@ if __name__ == '__main__':
                 .format(fail_perc = fail_count / total_count * 100))
             test_result.append('\tMatch Percentage      : {match_perc:.2f} %'
                 .format(match_perc = num_matches / total_count * 100))
-            test_result.append('\First Match Percentage: {first_match_perc:.2f} %'
+            test_result.append('\tFirst Match Percentage: {first_match_perc:.2f} %'
                 .format(first_match_perc = pass_count / total_count * 100))
 
             test_results.append( '\n'.join(test_result) )

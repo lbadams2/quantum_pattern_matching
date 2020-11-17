@@ -130,10 +130,10 @@ def create_initial_state(qc, s, M):
 def diffuser_matrix(qc, oracles, M, s):
     qc.h( qubits_for_pattern_chars[0] )
 
-    diffuser_matrix = np.identity( int( 2**(s * M) ) )
+    diffuser_matrix = np.identity( int( 2**(s) ) )
     diffuser_matrix[0, 0] = -1
     qubit_start_index = 0
-    qubit_stop_index  = qubit_start_index + (s * M)
+    qubit_stop_index  = qubit_start_index + (s)
     qc.unitary(
         quantum_info.Operator( diffuser_matrix ),
         range( qubit_start_index, qubit_stop_index ),
@@ -181,7 +181,7 @@ def pattern_match_single_oracles(qc, oracles, pattern, M, s):
     qubit_start_index = j * s
     qubit_stop_index  = qubit_start_index + s
     pattern_char = pattern[j]
-    print(f'pattern_char = {pattern_char}')
+
     qc.unitary(
         oracles[ pattern_char ],
         range( qubit_start_index, qubit_stop_index ),
@@ -237,6 +237,8 @@ def run_match(input_string, pattern, **keyword_args):
 
     use_many_oracles = keyword_args['oracles'] == 'many'
 
+    alphabet = keyword_args['alphabet']
+
     if input_string == None:
         input_string = argv[1]
 
@@ -265,15 +267,16 @@ def run_match(input_string, pattern, **keyword_args):
         print(f's = {s}')
 
     qc = QuantumCircuit()
+
     if use_many_oracles:
-        oracles = generate_many_oracles( s, input_string, len(pattern), debug )
+        oracles = generate_many_oracles( s, input_string, len(pattern), debug, alphabet )
     else:
-        oracles = generate_oracles_single( s, input_string, len(pattern), debug )
+        oracles = generate_oracles_single( s, input_string, len(pattern), debug, alphabet )
 
     create_initial_state(qc, s, M)
 
     # run ~sqrt(N) times
-    number_of_iterations = 1 # math.ceil( math.sqrt( math.pow(s, 2) ) )
+    number_of_iterations = math.ceil( math.sqrt( math.pow(s, 2) ) )
     if debug:
         print(f'number_of_iterations = {number_of_iterations}')
     for q in range(number_of_iterations):
@@ -287,7 +290,7 @@ def run_match(input_string, pattern, **keyword_args):
     qc.measure( qubits_for_pattern_chars[0], classicalRegisters )
 
     if debug:
-        # qc.draw(output = 'mpl', plot_barriers = True, filename = "test2.png")
+        qc.draw(output = 'mpl', plot_barriers = True, filename = "test2.png")
         print( qc )
 
     if use_ibm:
@@ -314,7 +317,8 @@ if __name__ == '__main__':
         is_test_run = False,
         use_ibm = False,
         oracles = 'many', # 'many' or 'single'
-        diffuser = 'gates' # 'gates' or 'matrix'
+        diffuser = 'gates', # 'gates' or 'matrix'
+        alphabet = ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')
     )
 
     pprint.pprint(counts)
