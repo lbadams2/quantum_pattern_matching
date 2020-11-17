@@ -98,6 +98,9 @@ def random_string(alphabet, N):
     return rand_string
 
 def test_single_char_patterns():
+    global alphabet
+    alphabet = '01'
+
     test('0000', '0')
 
     for pattern in ('0', '1'):
@@ -116,6 +119,9 @@ def test_single_char_patterns():
     test('10000001', '1')
 
 def test_two_char_patterns():
+    global alphabet
+    alphabet = '01'
+
     for input_string in ('0011', '0010', '1100', '0100', '0000'):
         test(input_string, '00')
 
@@ -145,6 +151,9 @@ def test_two_char_patterns():
     test('10000011', '11')
 
 def test_three_char_patterns():
+    global alphabet
+    alphabet = '01'
+
     for input_string in ('00011111', '10001111', '00001111'):
         test(input_string, '000')
 
@@ -175,6 +184,9 @@ def test_three_char_patterns():
     test('10000111', '111')
 
 def test_wildcard_patterns():
+    global alphabet
+    alphabet = '01'
+
     test('0000', '*')
 
     test('1000', '*')
@@ -202,6 +214,7 @@ def test_wildcard_patterns():
         test(input_string, '*1*')
 
 def test_random_pattern_and_input(use_wildcards):
+    global alphabet
     N = 8
     M = 2
     alphabet = '01'
@@ -280,7 +293,7 @@ def run_tests():
 
 
 if __name__ == '__main__':
-    use_ibm = True
+    use_ibm = False
 
     test_count = 1
     test_results = list()
